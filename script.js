@@ -140,14 +140,60 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // SCROLL ENTRANCE OBSERVER ANIMATIONS
+  // SCROLL ENTRANCE OBSERVER ANIMATIONS & STAT COUNTERS
   // ==========================================================================
   const animatedElements = document.querySelectorAll('.animate-on-scroll');
+
+  // Count up animation for stats numbers
+  function animateCountUp(el) {
+    const targetText = el.innerText;
+    const numberPattern = /([\d.]+)/;
+    const match = targetText.match(numberPattern);
+    if (!match) return;
+
+    const targetNum = parseFloat(match[0]);
+    const suffix = targetText.replace(match[0], '');
+    const isDecimal = match[0].includes('.');
+
+    let currentNum = 0;
+    const duration = 1800; // Animation duration in milliseconds (1.8 seconds)
+    const frameRate = 60; // Frames per second
+    const totalFrames = (duration / 1000) * frameRate;
+    let frame = 0;
+    
+    const increment = targetNum / totalFrames;
+
+    // Set initial display count
+    el.innerText = (isDecimal ? "0.0" : "0") + suffix;
+
+    const counterInterval = setInterval(() => {
+      frame++;
+      currentNum += increment;
+
+      if (frame >= totalFrames) {
+        clearInterval(counterInterval);
+        el.innerText = targetText; // Reset to original target string
+      } else {
+        if (isDecimal) {
+          el.innerText = currentNum.toFixed(1) + suffix;
+        } else {
+          el.innerText = Math.floor(currentNum) + suffix;
+        }
+      }
+    }, 1000 / frameRate);
+  }
 
   const animationObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('show');
+        
+        // If the animated element is a stat card, run the counter up animation
+        const statNumber = entry.target.querySelector('.stat-number');
+        if (statNumber) {
+          animateCountUp(statNumber);
+        }
+        
         // Unobserve once shown to save layout cycles
         animationObserver.unobserve(entry.target);
       }
